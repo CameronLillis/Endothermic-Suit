@@ -5,7 +5,7 @@
 
 // Data wire is plugged into port 2 on the Arduino
 #define ONE_WIRE_BUS 2
-#define MOSFET_PIN   3 // PWM PIN
+#define MOSFET_PIN A1 // PWM PIN
 
 // Setup a oneWire instance to communicate with any OneWire devices (not just
 // Maxim/Dallas temperature ICs)
