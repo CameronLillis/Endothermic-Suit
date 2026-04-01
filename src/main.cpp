@@ -17,17 +17,17 @@ DallasTemperature sensors(&oneWire);
 // PID Variables
 double setTemp, tempRead, Output;
 
-const int maxPower = 255;
+const int maxPower = 127;
 
 // Specify the links and initial tuning parameters
-double Kp = 2, Ki = 5, Kd = 1;
+double Kp = 4, Ki = 7, Kd = 2;
 
 /*
   Kp reacts to the current error.
     - Bigger Kp makes the system respond faster, (to much causes overshoot)
   Ki reacts to accumulated past error.
-    - Helps remove steady offset; to much can make the system sluggish, or
-  "windup" Kd reacts to how fast the error changing
+    - Helps remove steady offset; to much can make the system sluggish, or "windup" 
+  Kd reacts to how fast the error changing
     - It acts like damping, helping calm the motion and reduce overshoot
       can amplify noise if used badly.
 */
