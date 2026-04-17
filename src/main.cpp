@@ -1,85 +1,87 @@
-// Include the libraries we need
 #include <DallasTemperature.h>
 #include <OneWire.h>
 #include <PID_v1.h>
+// #include <Adafruit_GFX.h>
+// #include <Adafruit_SSD1306.h>
+// #include <SPI.h>
+// #include <Wire.h>
 
-// Data wire is plugged into port 2 on the Arduino
+
+// #define SCREEN_WIDTH 132 // OLED display width, in pixels
+// #define SCREEN_HEIGHT 64 // OLED display height, in pixels
+
+// Pins
+#define VOLTAGE_SENSOR_PIN A0
 #define ONE_WIRE_BUS 2
-#define MOSFET_PIN   3 // PWM PIN
-
-// Setup a oneWire instance to communicate with any OneWire devices (not just
-// Maxim/Dallas temperature ICs)
+#define MOSFET_PIN 3
+#define A A1
+#define B A3
+// OneWire / Temperature setup
 OneWire oneWire(ONE_WIRE_BUS);
-
-// Pass our oneWire reference to Dallas Temperature.
 DallasTemperature sensors(&oneWire);
 
 // PID Variables
 double setTemp, tempRead, Output;
-
-const int maxPower = 127;
-
-// Specify the links and initial tuning parameters
 double Kp = 4, Ki = 7, Kd = 2;
+const int maxPower = 255;
 
-/*
-  Kp reacts to the current error.
-    - Bigger Kp makes the system respond faster, (to much causes overshoot)
-  Ki reacts to accumulated past error.
-    - Helps remove steady offset; to much can make the system sluggish, or "windup" 
-  Kd reacts to how fast the error changing
-    - It acts like damping, helping calm the motion and reduce overshoot
-      can amplify noise if used badly.
-*/
+PID myPID(&tempRead, &Output, &setTemp, Kp, Ki, Kd, REVERSE);
 
-PID myPID(&tempRead, &Output, &setTemp, Kp, Ki, Kd, DIRECT);
+// Voltage sensing variables
+float adc_voltage = 0.0;
+float in_voltage = 0.0;
+
+float R1 = 30000.0;
+float R2 = 7500.0;
+float ref_voltage = 5.0;
+
+int adc_value = 0;
 
 void setup() {
-  // Start serial port
   Serial.begin(9600);
 
-  // Start up temp sensor libary
   sensors.begin();
 
   pinMode(MOSFET_PIN, OUTPUT);
 
-  // Set temp variable
   setTemp = 20;
-  setTemp *= -1;
-  myPID.SetOutputLimits(0, maxPower);
 
-  // turn the PID on
+  myPID.SetOutputLimits(0, maxPower);
   myPID.SetMode(AUTOMATIC);
 }
 
 void loop() {
-  // call sensors.requestTemperatures() to issue a global temperature
-  // request to all devices on the bus
-  sensors.requestTemperatures(); // Send the command to get temperatures
-  delay(500);
-  // After we got the temperatures, we can print them here.
-  // We use the function ByIndex, and as an example get the temperature from the
-  // first sensor only.
-  // setTemp = analogRead() used for analog input
+  // Read temperature
+  sensors.requestTemperatures();
   tempRead = sensors.getTempCByIndex(0);
-  // float tempC = sensors.getTempCByIndex(0);
-  // float tempF = sensors.getTempFByIndex(0);
-  tempRead = tempRead * -1;
-  // Check if reading was successful
+
+  // Read voltage through divider
+  adc_value = analogRead(VOLTAGE_SENSOR_PIN);
+  adc_voltage = (adc_value * ref_voltage) / 1023.0;
+  in_voltage = adc_voltage / (R2 / (R1 + R2));
+
   if (tempRead != DEVICE_DISCONNECTED_C) {
     myPID.Compute();
+
     analogWrite(MOSFET_PIN, (int)Output);
 
-    Serial.print("Temp:");
-    Serial.print(abs(tempRead));
-    Serial.print(",");
-    Serial.print("Setpoint:");
-    Serial.print(abs(setTemp));
-    Serial.print(",");
-    Serial.print("Output:");
-    Serial.println(Output);
+    Serial.print("Temp: ");
+    Serial.print(tempRead);
+    Serial.print(" C, Set: ");
+    Serial.print(setTemp);
+    Serial.print(" C, PWM: ");
+    Serial.print((int)Output);
+    Serial.print(", ADC: ");
+    Serial.print(adc_value);
+    Serial.print(", A0 Voltage: ");
+    Serial.print(adc_voltage, 2);
+    Serial.print(" V, Input Voltage: ");
+    Serial.print(in_voltage, 2);
+    Serial.println(" V");
   } else {
     analogWrite(MOSFET_PIN, 0);
     Serial.println("Error: Could not read temperature data");
   }
+
+  delay(500);
 }
