@@ -1,132 +1,100 @@
-#include <Wire.h>
-#include <Adafruit_GFX.h>
-#include <Adafruit_SH110X.h>
 #include <RotaryEncoder.h>
+#include <U8g2lib.h>
+#include <Wire.h>
 
 // --- Pin Definitions ---
-// Change these to match your wiring
-
-// Rotary Encoder
 constexpr int PIN_ENC_A = 2;
 constexpr int PIN_ENC_B = 3;
 constexpr int PIN_ENC_BTN = 4;
 
-// Buttons
 constexpr int PIN_CONF_BTN = 9;
 constexpr int PIN_BACK_BTN = 10;
 
-// --- Globals ---
+// --- Display (U8g2 renamed to "interface") ---
+U8G2_SH1106_128X64_NONAME_F_HW_I2C interface(U8G2_R0, U8X8_PIN_NONE);
 
-// Declaration for an SSD1306 display connected to I2C (SDA, SCL pins)
-// The pins for I2C are defined by the Wire-library.
-// On an arduino UNO:       A4(SDA), A5(SCL)
-Adafruit_SH1106G display(128, 64, &Wire, -1);
+// --- Encoder ---
 RotaryEncoder encoder(PIN_ENC_A, PIN_ENC_B, RotaryEncoder::LatchMode::FOUR3);
 
-// State updated by ISRs
+// --- Shared state (updated by ISR) ---
 static volatile int encoderPosition = 0;
-static volatile bool encBtnPressed = false;
-static volatile bool confBtnPressed = false;
-static volatile bool backBtnPressed = false;
 
-// 30 Hz render (~33ms)
+// --- Render throttle ---
 static const unsigned long RENDER_INTERVAL_MS = 33;
 static unsigned long lastRenderMs = 0;
 
-// --- ISRs ---
-
+// --- ISR ---
 void encoderISR() {
-    encoder.tick();
-    int dir = (int)encoder.getDirection();
-    if (dir != 0) {
-        encoderPosition += -dir;
-    }
-}
-
-void encBtnISR() {
-    encBtnPressed = (digitalRead(PIN_ENC_BTN) == LOW);
-}
-
-void confBtnISR() {
-    confBtnPressed = (digitalRead(PIN_CONF_BTN) == LOW);
-}
-
-void backBtnISR() {
-    backBtnPressed = (digitalRead(PIN_BACK_BTN) == LOW);
+  encoder.tick();
+  int dir = (int)encoder.getDirection();
+  if (dir != 0) {
+    encoderPosition -= dir;
+  }
 }
 
 // --- Render ---
-
 void render(int pos, bool encBtn, bool confBtn, bool backBtn) {
-    display.clearDisplay();
-    display.setTextSize(1);
+  interface.clearBuffer();
 
-    display.setCursor(0, 0);
-    display.print("Hardware Test");
-    display.drawLine(0, 10, 127, 10, 1);
+  interface.setFont(u8g2_font_6x10_tr);
 
-    display.setCursor(0, 14);
-    display.print("Encoder  ");
-    display.print(pos);
+  interface.drawStr(0, 10, "Hardware Test");
+  interface.drawHLine(0, 12, 128);
 
-    display.setCursor(0, 26);
-    display.print("Enc Btn  ");
-    display.print(encBtn ? "PRESSED" : "---");
+  char buf[32];
 
-    display.setCursor(0, 38);
-    display.print("Conf Btn ");
-    display.print(confBtn ? "PRESSED" : "---");
+  sprintf(buf, "Encoder: %d", pos);
+  interface.drawStr(0, 24, buf);
 
-    display.setCursor(0, 50);
-    display.print("Back Btn ");
-    display.print(backBtn ? "PRESSED" : "---");
+  interface.drawStr(0, 36, encBtn ? "Enc Btn: PRESSED" : "Enc Btn: ---");
+  interface.drawStr(0, 46, confBtn ? "Conf Btn: PRESSED" : "Conf Btn: ---");
+  interface.drawStr(0, 56, backBtn ? "Back Btn: PRESSED" : "Back Btn: ---");
 
-    display.display();
+  interface.sendBuffer();
 }
 
-// --- Setup / Loop ---
-
+// --- Setup ---
 void setup() {
-    Serial.begin(115200);
-    delay(1000);
+  Serial.begin(115200);
+  delay(1000);
 
-    Wire.begin();
-    Wire.setClock(400000);
+  interface.begin();
 
-    if (!display.begin(0x3C, true)) {
-        Serial.println("SH1106 failed!");
-        while (1) delay(1000);
-    }
-    display.clearDisplay();
-    display.setTextColor(SH110X_WHITE);
-    display.display();
+  pinMode(PIN_ENC_A, INPUT_PULLUP);
+  pinMode(PIN_ENC_B, INPUT_PULLUP);
+  pinMode(PIN_ENC_BTN, INPUT_PULLUP);
+  pinMode(PIN_CONF_BTN, INPUT_PULLUP);
+  pinMode(PIN_BACK_BTN, INPUT_PULLUP);
 
-    pinMode(PIN_ENC_A, INPUT_PULLUP);
-    pinMode(PIN_ENC_B, INPUT_PULLUP);
-    pinMode(PIN_ENC_BTN, INPUT_PULLUP);
-    pinMode(PIN_CONF_BTN, INPUT_PULLUP);
-    pinMode(PIN_BACK_BTN, INPUT_PULLUP);
+  attachInterrupt(digitalPinToInterrupt(PIN_ENC_A), encoderISR, CHANGE);
+  attachInterrupt(digitalPinToInterrupt(PIN_ENC_B), encoderISR, CHANGE);
 
-    attachInterrupt(digitalPinToInterrupt(PIN_ENC_A), encoderISR, CHANGE);
-    attachInterrupt(digitalPinToInterrupt(PIN_ENC_B), encoderISR, CHANGE);
-
-    render(0, false, false, false);
-    Serial.println("Ready");
+  render(0, false, false, false);
+  Serial.println("Ready");
 }
 
+// --- Loop ---
 void loop() {
-    unsigned long now = millis();
-    if (now - lastRenderMs < RENDER_INTERVAL_MS) return;
-    lastRenderMs = now;
+  unsigned long now = millis(); // how many milliseconds since arduino started
 
-    noInterrupts();
-    int pos = encoderPosition;
-    interrupts();
+  /*
+    chat gpt says that this means only run the rest of the code every
+    RENDER_INTERVAL_MS  (e.g. 33ms)
 
-    // Read buttons normally
-    bool encBtn = (digitalRead(PIN_ENC_BTN) == LOW);
-    bool confBtn = (digitalRead(PIN_CONF_BTN) == LOW);
-    bool backBtn = (digitalRead(PIN_BACK_BTN) == LOW);
+    - Without this, your loop would run:
+    - thousands of times per second and spam the OLED constantly
+  */
+  if (now - lastRenderMs < RENDER_INTERVAL_MS)
+    return;
+  lastRenderMs = now;
 
-    render(pos, encBtn, confBtn, backBtn);
+  noInterrupts();
+  int pos = encoderPosition;
+  interrupts();
+
+  bool encBtn = (digitalRead(PIN_ENC_BTN) == LOW);
+  bool confBtn = (digitalRead(PIN_CONF_BTN) == LOW);
+  bool backBtn = (digitalRead(PIN_BACK_BTN) == LOW);
+
+  render(pos, encBtn, confBtn, backBtn);
 }
