@@ -7,9 +7,9 @@
 // Change these to match your wiring
 
 // Rotary Encoder
-constexpr int PIN_ENC_A = 6;
-constexpr int PIN_ENC_B = 7;
-constexpr int PIN_ENC_BTN = 8;
+constexpr int PIN_ENC_A = 2;
+constexpr int PIN_ENC_B = 3;
+constexpr int PIN_ENC_BTN = 4;
 
 // Buttons
 constexpr int PIN_CONF_BTN = 9;
@@ -109,9 +109,6 @@ void setup() {
 
     attachInterrupt(digitalPinToInterrupt(PIN_ENC_A), encoderISR, CHANGE);
     attachInterrupt(digitalPinToInterrupt(PIN_ENC_B), encoderISR, CHANGE);
-    attachInterrupt(digitalPinToInterrupt(PIN_ENC_BTN), encBtnISR, CHANGE);
-    attachInterrupt(digitalPinToInterrupt(PIN_CONF_BTN), confBtnISR, CHANGE);
-    attachInterrupt(digitalPinToInterrupt(PIN_BACK_BTN), backBtnISR, CHANGE);
 
     render(0, false, false, false);
     Serial.println("Ready");
@@ -124,10 +121,12 @@ void loop() {
 
     noInterrupts();
     int pos = encoderPosition;
-    bool encBtn = encBtnPressed;
-    bool confBtn = confBtnPressed;
-    bool backBtn = backBtnPressed;
     interrupts();
+
+    // Read buttons normally
+    bool encBtn = (digitalRead(PIN_ENC_BTN) == LOW);
+    bool confBtn = (digitalRead(PIN_CONF_BTN) == LOW);
+    bool backBtn = (digitalRead(PIN_BACK_BTN) == LOW);
 
     render(pos, encBtn, confBtn, backBtn);
 }

@@ -6,7 +6,13 @@
 // --- Pin Definitions ---
 // Change these to match your wiring
 
-/OLED display height, in pixels
+// Rotary Encoder
+constexpr int PIN_ENC_A = 6;
+constexpr int PIN_ENC_B = 5;
+constexpr int PIN_ENC_BTN = 7;
+
+#define SCREEN_WIDTH 128 // OLED display width, in pixels
+#define SCREEN_HEIGHT 64 // OLED display height, in pixels
 
 #define OLED_RESET -1
 #define SCREEN_ADDRESS 0x3D
