@@ -6,10 +6,8 @@
 #include <U8g2lib.h>
 #include <Wire.h>
 
-// TODO: Make PID more aggressive on downturn
-
 // GLOBALS
-// #define MOSFET_PIN 1
+#define MOSFET_PIN 5
 
 //*---- Temp Sensor ---- *//
 #define ONE_WIRE_BUS 7
@@ -88,7 +86,7 @@ void setup() {
   Wire.begin();
 
   Wire.setClock(400000);
-  // pinMode(MOSFET_PIN, OUTPUT);
+  pinMode(MOSFET_PIN, OUTPUT);
 
   myPID.SetOutputLimits(0, maxPower);
   myPID.SetMode(AUTOMATIC);
@@ -139,7 +137,7 @@ void loop() {
 
   myPID.Compute();
 
-  // analogWrite(MOSFET_PIN, (int)Output);
+  analogWrite(MOSFET_PIN, (int)Output);
 
   Serial.print("Temp: ");
   Serial.println(tempReadF);
