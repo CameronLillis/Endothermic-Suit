@@ -152,13 +152,10 @@ void loop() {
   Serial.print("PWM: ");
   Serial.println((int)Output);
 
-  // analogWrite(MOSFET_PIN, 0);
-  // Serial.println("Error: Could not read temperature data");
+  analogWrite(MOSFET_PIN, 0);
+  Serial.println("Error: Could not read temperature data");
 
   /*
-   chat gpt says that this means only run the rest of the code every
-   RENDER_INTERVAL_MS  (e.g. 33ms)
-
    - Without this, your loop would run:
    - thousands of times per second and spam the OLED constantly
  */
@@ -167,12 +164,3 @@ void loop() {
 
   render(setTemp, tempReadF, encBtn);
 }
-
-/**
- *
- * high point is 75
- * low point is 65
- * initial set value is 70
- *
- *
- */
