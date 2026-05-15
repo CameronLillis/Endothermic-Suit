@@ -89,20 +89,7 @@ The current software limits the set temperature range to:
 #define MAX_SET_TEMP 80.00
 ```
 
-> The default set temperature is based around 70°F and can be adjusted with the rotary encoder.
-
-## Safety Notes
-
-This project uses external power, thermoelectric cooling modules, and MOSFET switching. Use caution when testing.
-
-Important considerations:
-
-- Do not power the peltier directly from the Arduino.
-- Use a proper MOSFET or driver module rated for the required current.
-- Make sure all grounds are connected together when using an external power supply.
-- Use a heat sink and fan on the hot side of the peltier.
-- Monitor temperature carefully during testing.
-- Avoid short circuits, loose wiring, or exposed power connections.
+The default set temperature is based around 70°F and can be adjusted with the rotary encoder.
 
 ## License
 
