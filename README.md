@@ -44,16 +44,7 @@ Libraries used:
 5. The PWM signal controls the MOSFET, which controls power to the cooling element.
 6. The OLED displays the live temperature and target set temperature.
 
-## Temperature Range
-
-The current software limits the set temperature range to:
-
-```cpp
-#define MIN_SET_TEMP 65.00
-#define MAX_SET_TEMP 80.00
-```
-
-The default set temperature is based around 70°F and can be adjusted with the rotary encoder.
+> Currently the temperature range is set between 65.00F and 80.00F. The default set temperature is based around 70°F and can be adjusted with the rotary encoder.
 
 ## License
 
