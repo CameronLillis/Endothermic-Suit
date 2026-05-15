@@ -1,6 +1,6 @@
 # Endothermic Suit
 
-The **Endothermic Suit** is a wearable cooling system prototype designed to help regulate body temperature using thermoelectric cooling. The project uses an Arduino-based control system to read temperature data, adjust a target temperature, and control cooling output through PWM.
+The **Endothermic Suit** is a wearable cooling system prototype designed to help regulate body temperature using thermoelectric cooling. The ideal application is in the entertainment, film, and television production industries particularly for cosplay.
 
 This project is part of an experimental thermal-management design focused on portable cooling, wearable electronics, and user-controlled temperature regulation.
 
@@ -11,26 +11,16 @@ The system uses a temperature sensor to monitor the cooling surface, a PID contr
 The goal of the project is to create a compact cooling insert that could be integrated into a vest or wearable system without requiring bulky external attachments.
 
 ## Features
-
-- Reads temperature using a DS18B20 temperature sensor
-- Displays live temperature and set temperature on an OLED screen
-- Uses PID control for smoother temperature regulation
-- Allows user adjustment with a rotary encoder
-- Outputs PWM control signal to a MOSFET driver
-- Designed for thermoelectric cooling / peltier-based cooling experiments
+- Reads live temperature data and displays to OLED screen
+- Uses PID to adjust voltage output to Peltier devices for power efficiency.
+- A set temperature may be set using rotary dial (displayed on OLED)
 - Built using PlatformIO and the Arduino framework
 
-## Hardware Used
-
-- Arduino Uno
+## Hardware interfaced directly with Arduino 
 - DS18B20 temperature sensor
 - MOSFET driver/module
-- Thermoelectric cooling module / peltier element
-- OLED display using U8g2
-- Rotary encoder
-- External battery or DC power supply
-- Heat sink and fan for heat dissipation
-- Wiring, connectors, and mounting hardware
+- OLED Display & EC11 Rotary encoder module
+- External battery 
 
 ## Software / Libraries
 
@@ -44,16 +34,6 @@ Libraries used:
 - `RotaryEncoder`
 - `U8g2`
 
-## Current Pin Setup
-
-| Component | Pin |
-|---|---:|
-| MOSFET PWM Output | D5 |
-| DS18B20 Data Pin | D7 |
-| Rotary Encoder A | D2 |
-| Rotary Encoder B | D3 |
-| Rotary Encoder Button | D4 |
-| OLED Display | I2C |
 
 ## How It Works
 
@@ -63,22 +43,6 @@ Libraries used:
 4. The PID output is converted into a PWM value.
 5. The PWM signal controls the MOSFET, which controls power to the cooling element.
 6. The OLED displays the live temperature and target set temperature.
-
-## PID Control
-
-The PID controller uses three tuning constants:
-
-```cpp
-double Kp, Ki, Kd;
-```
-
-These constants control how aggressively the system reacts to temperature error.
-
-- `Kp` controls the immediate response to error.
-- `Ki` helps correct accumulated error over time.
-- `Kd` helps reduce overshoot by reacting to the rate of change.
-
-The current project uses PWM output for MOSFET control. Earlier relay-based notes used time-proportioning control because relays can only switch fully ON or OFF.
 
 ## Temperature Range
 
